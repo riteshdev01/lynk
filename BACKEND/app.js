@@ -14,8 +14,11 @@ import cookieParser from "cookie-parser"
 dotenv.config({ path: ".env" })
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
+    : ["http://localhost:5173", "http://localhost:5174"];
 
 app.use(cors({
     origin: allowedOrigins,
@@ -35,9 +38,9 @@ app.get("/:id",redirectFromShortUrl)
 
 app.use(errorHandler)
 
-app.listen(3000,()=>{
+app.listen(PORT,()=>{
     connectDB()
-    console.log("Server is running on http://localhost:3000");
+    console.log(`Server is running on http://localhost:${PORT}`);
 })
 
 // GET - Redirection 

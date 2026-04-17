@@ -1,31 +1,43 @@
 # URL Shortener
 
-A full-stack URL shortener built with Express, MongoDB, React, and Vite.
+Full-stack URL shortener built with Express, MongoDB, React, and Vite.
 
-This README reflects the current implementation in this repository.
+The project supports both public URL shortening and authenticated user workflows (custom slugs, user dashboard, and URL management) using cookie-based JWT authentication.
 
-## What This Project Does
+## Table Of Contents
 
-- Shorten URLs without login
-- Register, login, logout with cookie-based JWT auth
-- Create custom slugs for authenticated users
-- Redirect short links and track clicks
-- Show recent links in dashboard with summary stats
-- Open, copy, and delete your own URLs from dashboard
-- Toggle light/dark mode in auth and dashboard screens
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Run Locally](#run-locally)
+- [Scripts](#scripts)
+- [API Reference](#api-reference)
+- [Authentication And Security Notes](#authentication-and-security-notes)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [License](#license)
 
-## What I Implemented In This Project
+## Features
 
-- Monorepo structure with separate backend and frontend apps
-- Layered backend architecture: Routes -> Controllers -> Services -> DAO -> Models
-- Cookie-based authentication with protected routes
-- Global optional user attachment middleware (`attachUser`) for mixed public/private behavior
-- URL creation flow for both anonymous and logged-in users
-- Redirect flow with click increment (`findOneAndUpdate` + `$inc`)
-- Dashboard URL listing (`POST /api/user/urls`)
-- URL deletion endpoint with ownership check (`DELETE /api/user/urls/:urlId`)
-- Dashboard delete action in UI (no popup), with loading state + React Query refresh
-- Route guard on dashboard using TanStack Router + `GET /api/auth/me`
+- Create short URLs without logging in.
+- Register, login, logout, and get current user session.
+- Create custom slugs when authenticated.
+- Redirect by short code and increment click count.
+- View all URLs created by the current user.
+- Delete owned URLs from the dashboard.
+- Frontend route protection using session validation.
+
+## Architecture
+
+This repository is organized as a monorepo with separate frontend and backend applications.
+
+- Backend layers: Routes -> Controllers -> Services -> DAO -> Models
+- Optional user context middleware: `attachUser`
+- Protected endpoint middleware: `authMiddleware`
+- Frontend state and data flow: Redux Toolkit (auth state), TanStack Query (server state), and TanStack Router (routing and guards)
 
 ## Tech Stack
 
@@ -49,9 +61,6 @@ This README reflects the current implementation in this repository.
 - TanStack Router
 - TanStack Query
 - Axios
-- Custom CSS for UI styling
-
-Note: Tailwind packages exist in dependencies, but the current UI is primarily custom CSS-driven.
 
 ## Project Structure
 
@@ -80,127 +89,17 @@ url-shortner/
       utils/
 ```
 
-## API Endpoints
+## Getting Started
 
-Base URL: `http://localhost:3000`
+### Prerequisites
 
-### Auth
+- Node.js 18 or later
+- npm 9 or later
+- MongoDB running locally (default port `27017`)
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me` (protected)
+### Installation
 
-### URL
-
-- `POST /api/create` (anonymous + authenticated)
-- `GET /:id` (redirect + click increment)
-
-### User URLs
-
-- `POST /api/user/urls` (protected) -> fetch current user's links
-- `DELETE /api/user/urls/:urlId` (protected) -> delete current user's link
-
-## Request/Response Examples
-
-### Create short URL
-
-```http
-POST /api/create
-Content-Type: application/json
-
-{
-  "url": "https://example.com",
-  "slug": "my-custom-slug"
-}
-```
-
-```json
-{
-  "shortUrl": "http://localhost:3000/my-custom-slug"
-}
-```
-
-### Get user's URLs
-
-```http
-POST /api/user/urls
-Cookie: accessToken=...
-```
-
-```json
-{
-  "message": "success",
-  "urls": [
-    {
-      "_id": "...",
-      "full_url": "https://example.com",
-      "short_url": "abc1234",
-      "clicks": 3,
-      "user": "..."
-    }
-  ]
-}
-```
-
-### Delete user URL
-
-```http
-DELETE /api/user/urls/68000a111111111111111111
-Cookie: accessToken=...
-```
-
-```json
-{
-  "message": "URL deleted"
-}
-```
-
-## Authentication Model
-
-- Register/login set an `accessToken` cookie
-- Cookie options include `httpOnly` and `sameSite: Lax`
-- Frontend sends credentials with Axios (`withCredentials: true`)
-- Private endpoints are protected by `authMiddleware`
-
-## Key Concepts Used
-
-- JWT auth via cookies
-- Middleware separation:
-  - `attachUser`: optional user context
-  - `authMiddleware`: strict route protection
-- DB uniqueness on `short_url`
-- Redirect analytics via atomic click increment
-- React Query caching + invalidation after create/delete
-- Redux for auth state and TanStack Router for route-level guards
-
-## Prerequisites
-
-- Node.js 18+
-- npm 9+
-- MongoDB running locally (default `27017`)
-
-## Environment Variables
-
-Create `BACKEND/.env`:
-
-```env
-MONGO_URI=mongodb://localhost:27017/URL-SHORTNER
-APP_URL=http://localhost:3000/
-JWT_SECRET=thisisasecretkey
-```
-
-Optional `FRONTEND/.env`:
-
-```env
-VITE_API_URL=http://localhost:3000
-```
-
-If `VITE_API_URL` is not set, frontend defaults to `http://localhost:3000`.
-
-## Local Setup
-
-From repo root:
+From repository root:
 
 ```bash
 cd BACKEND
@@ -210,7 +109,36 @@ cd ../FRONTEND
 npm install
 ```
 
-Run in separate terminals:
+## Environment Variables
+
+Create `BACKEND/.env`:
+
+```env
+MONGO_URI=mongodb://localhost:27017/URL-SHORTNER
+APP_URL=http://localhost:3000/
+JWT_SECRET=replace-with-a-secure-secret
+PORT=3000
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+NODE_ENV=development
+```
+
+Notes:
+
+- `MONGO_URI`, `APP_URL`, and `JWT_SECRET` are required.
+- `PORT` defaults to `3000` when not provided.
+- `CORS_ORIGINS` is optional. If omitted, backend defaults to `http://localhost:5173` and `http://localhost:5174`.
+
+Optional `FRONTEND/.env`:
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+If `VITE_API_URL` is not set, frontend defaults to `http://localhost:3000`.
+
+## Run Locally
+
+Use separate terminals:
 
 1. Start MongoDB
 
@@ -232,63 +160,102 @@ cd FRONTEND
 npm run dev
 ```
 
-Frontend usually runs on `http://localhost:5173` or `http://localhost:5174`.
+Default local URLs:
+
+- Backend: `http://localhost:3000`
+- Frontend: `http://localhost:5173` (or next available Vite port)
 
 ## Scripts
 
-### Backend
+### Backend (`BACKEND/package.json`)
 
-- `npm run dev` -> start with nodemon
-- `npm start` -> start with node
+- `npm run dev` - Start backend with nodemon
+- `npm start` - Start backend with node
 
-### Frontend
+### Frontend (`FRONTEND/package.json`)
 
-- `npm run dev` -> run Vite dev server
-- `npm run build` -> production build
-- `npm run preview` -> preview build
-- `npm run lint` -> run ESLint
+- `npm run dev` - Start Vite development server
+- `npm run build` - Build production assets
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-## CORS Configuration
+## API Reference
 
-Backend currently allows:
+Base URL: `http://localhost:3000`
 
-- `http://localhost:5173`
-- `http://localhost:5174`
+### Authentication
 
-If your frontend uses another origin, update `allowedOrigins` in `BACKEND/app.js`.
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me` (protected)
 
-## Common Issues
+### URL Management
 
-### Network Error from frontend
+- `POST /api/create` (public; supports authenticated context when cookie exists)
+- `GET /:id` (redirect + click increment)
 
-- Verify backend is running on port `3000`
-- Verify MongoDB is running
-- Verify `VITE_API_URL` value
+### User URLs
 
-### Unauthorized on protected routes
+- `POST /api/user/urls` (protected; fetch current user's URLs)
+- `DELETE /api/user/urls/:urlId` (protected; delete owned URL)
 
-- Ensure login was successful and cookie is set
-- Ensure requests send credentials (`withCredentials: true`)
+### Example: Create Short URL
 
-### Mongo connection failure
+```http
+POST /api/create
+Content-Type: application/json
 
-- Start MongoDB first
-- Verify `MONGO_URI` in `BACKEND/.env`
+{
+  "url": "https://example.com",
+  "slug": "my-custom-slug"
+}
+```
 
-## Security Notes
+```json
+{
+  "shortUrl": "http://localhost:3000/my-custom-slug"
+}
+```
 
-- Replace `JWT_SECRET` in production
-- Keep cookie `secure: true` in production with HTTPS
-- Tighten CORS origins for deployed environments
+## Authentication And Security Notes
 
-## Future Improvements
+- Authentication uses an `accessToken` cookie.
+- Cookie settings include `httpOnly` and `sameSite: Lax`.
+- Cookie `secure` is enabled automatically in production (`NODE_ENV=production`).
+- Frontend sends cookies with `withCredentials: true`.
+- Protected routes are enforced by backend middleware.
 
-- Add request schema validation (zod/joi/express-validator)
-- Add pagination/filter/sort for user URL list
-- Add edit URL metadata and advanced analytics charts
-- Add automated tests (unit, integration, e2e)
-- Add rate limiting for auth and create endpoints
+For production deployments:
 
-## License
+- Use a strong `JWT_SECRET`.
+- Serve over HTTPS.
+- Restrict `CORS_ORIGINS` to trusted domains only.
 
-This project is currently unlicensed.
+## Troubleshooting
+
+### Frontend shows network errors
+
+- Verify backend is running on the configured port.
+- Verify MongoDB is running.
+- Verify `VITE_API_URL` matches backend base URL.
+
+### Unauthorized responses on protected endpoints
+
+- Confirm login request succeeds.
+- Confirm browser receives the `accessToken` cookie.
+- Confirm requests are sent with credentials.
+
+### MongoDB connection errors
+
+- Start MongoDB before backend.
+- Check `MONGO_URI` in `BACKEND/.env`.
+
+## Roadmap
+
+- Add request validation (for example: zod or express-validator).
+- Add pagination/filtering/sorting for user URL listing.
+- Add test coverage (unit, integration, and e2e).
+- Add rate limiting for auth and URL creation endpoints.
+- Add richer analytics and reporting.
+
