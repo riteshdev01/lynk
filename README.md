@@ -2,104 +2,36 @@
 
 Full-stack URL shortener built with Express, MongoDB, React, and Vite.
 
-The project supports both public URL shortening and authenticated user workflows (custom slugs, user dashboard, and URL management) using cookie-based JWT authentication.
-
-## Table Of Contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Run Locally](#run-locally)
-- [Scripts](#scripts)
-- [API Reference](#api-reference)
-- [Authentication And Security Notes](#authentication-and-security-notes)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [License](#license)
-
 ## Features
 
-- Create short URLs without logging in.
-- Register, login, logout, and get current user session.
-- Create custom slugs when authenticated.
-- Redirect by short code and increment click count.
-- View all URLs created by the current user.
-- Delete owned URLs from the dashboard.
-- Frontend route protection using session validation.
-
-## Architecture
-
-This repository is organized as a monorepo with separate frontend and backend applications.
-
-- Backend layers: Routes -> Controllers -> Services -> DAO -> Models
-- Optional user context middleware: `attachUser`
-- Protected endpoint middleware: `authMiddleware`
-- Frontend state and data flow: Redux Toolkit (auth state), TanStack Query (server state), and TanStack Router (routing and guards)
+- Create short URLs with optional custom slugs.
+- Register, log in, and log out with cookie-based JWT authentication.
+- Manage and delete URLs from the user dashboard.
+- Track URL click counts.
 
 ## Tech Stack
 
-### Backend
-
-- Node.js
-- Express 5
-- MongoDB + Mongoose
-- jsonwebtoken
-- bcryptjs
-- cookie-parser
-- cors
-- dotenv
-- nanoid
-
-### Frontend
-
-- React 19
-- Vite
-- Redux Toolkit
-- TanStack Router
-- TanStack Query
-- Axios
+- **Backend:** Node.js, Express, MongoDB, Mongoose
+- **Frontend:** React, Vite, Redux Toolkit, TanStack Router, Axios
+- **Deployment:** Render and MongoDB Atlas
 
 ## Project Structure
 
 ```text
 url-shortner/
-  BACKEND/
-    app.js
-    package.json
-    src/
-      config/
-      controller/
-      dao/
-      middleware/
-      models/
-      routes/
-      services/
-      utils/
-  FRONTEND/
-    package.json
-    src/
-      api/
-      components/
-      pages/
-      routing/
-      store/
-      utils/
+├── BACKEND/
+└── FRONTEND/
 ```
 
-## Getting Started
+## Run Locally
 
 ### Prerequisites
 
-- Node.js 18 or later
-- npm 9 or later
-- MongoDB Atlas cluster (or local MongoDB)
+- Node.js 18+
+- npm 9+
+- MongoDB Atlas or a local MongoDB instance
 
-### Installation
-
-From repository root:
+### Install dependencies
 
 ```bash
 cd BACKEND
@@ -109,7 +41,7 @@ cd ../FRONTEND
 npm install
 ```
 
-## Environment Variables
+### Configure the backend
 
 Create `BACKEND/.env`:
 
@@ -118,188 +50,136 @@ MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/URL-SHORTNER
 APP_URL=http://localhost:3000/
 JWT_SECRET=replace-with-a-secure-secret
 PORT=3000
-CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+CORS_ORIGINS=http://localhost:5173
 NODE_ENV=development
 ```
 
-Notes:
-
-- `MONGO_URI`, `APP_URL`, and `JWT_SECRET` are required.
-- `PORT` defaults to `3000` when not provided.
-- `CORS_ORIGINS` is optional. If omitted, backend defaults to `http://localhost:5173` and `http://localhost:5174`.
-
-Optional `FRONTEND/.env`:
+Create `FRONTEND/.env` if the API is not running on the default URL:
 
 ```env
 VITE_API_URL=http://localhost:3000
 ```
 
-If `VITE_API_URL` is not set, frontend defaults to `http://localhost:3000`.
+Never commit `.env` files or secrets.
 
-## Run Locally
+### Start the applications
 
 Use separate terminals:
-
-1. Start MongoDB or use MongoDB Atlas
-
-2. Start backend
 
 ```bash
 cd BACKEND
 npm run dev
 ```
 
-3. Start frontend
-
 ```bash
 cd FRONTEND
 npm run dev
 ```
 
-Default local URLs:
-
+- Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3000`
-- Frontend: `http://localhost:5173` (or next available Vite port)
+- Health check: `http://localhost:3000/health`
 
-## Deploy With Render And MongoDB Atlas
+## Live Deployment
 
-The repository includes a [`render.yaml`](./render.yaml) Blueprint for deploying the
-backend and frontend as separate Render services.
+- Frontend: [lynk-frontend-vjo5.onrender.com](https://lynk-frontend-vjo5.onrender.com/)
+- Backend health check: [lynk-backend-ghl9.onrender.com/health](https://lynk-backend-ghl9.onrender.com/health)
 
-1. Create a MongoDB Atlas cluster and database user.
-2. Push this repository to GitHub and create a new Render Blueprint.
-3. Select the repository and apply `render.yaml`.
-4. After the services are created, set these values in the backend service:
-   - `MONGO_URI`: your MongoDB Atlas connection string.
-   - `APP_URL`: the backend Render URL, including the trailing slash, for example
-     `https://url-shortner-backend.onrender.com/`.
-   - `CORS_ORIGINS`: the frontend Render URL, without a trailing slash, for example
-     `https://url-shortner-frontend.onrender.com`.
-   - `JWT_SECRET` is generated by Render; do not replace it with a shared or
-     publicly visible value.
-5. Set `VITE_API_URL` in the frontend service to the backend URL without the
-   trailing slash, for example `https://url-shortner-backend.onrender.com`.
-6. Trigger a new frontend deploy after setting `VITE_API_URL`, because Vite embeds
-   `VITE_*` variables during the build.
+The deployed frontend uses:
 
-The backend exposes `GET /health` for Render health checks. Keep the frontend and
-backend URLs in environment variables rather than committing production secrets
-or URLs to the repository.
+```env
+VITE_API_URL=https://lynk-backend-ghl9.onrender.com
+```
 
-## Scripts
+## Deploy on Render
 
-### Backend (`BACKEND/package.json`)
+### Backend Web Service
 
-- `npm run dev` - Start backend with nodemon
-- `npm start` - Start backend with node
+Create a Render **Web Service** with:
 
-### Frontend (`FRONTEND/package.json`)
+| Setting | Value |
+|---|---|
+| Root Directory | `BACKEND` |
+| Build Command | `npm install` |
+| Start Command | `npm start` |
 
-- `npm run dev` - Start Vite development server
-- `npm run build` - Build production assets
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+Add these environment variables:
 
-## API Reference
+```env
+MONGO_URI=<your MongoDB Atlas connection string>
+JWT_SECRET=<your strong secret>
+NODE_ENV=production
+APP_URL=https://your-backend.onrender.com/
+CORS_ORIGINS=https://your-frontend.onrender.com
+```
 
-Base URL: `http://localhost:3000`
+### Frontend Static Site
+
+Create a Render **Static Site** with:
+
+| Setting | Value |
+|---|---|
+| Root Directory | `FRONTEND` |
+| Build Command | `npm install && npm run build` |
+| Publish Directory | `dist` |
+
+Add:
+
+```env
+VITE_API_URL=https://your-backend.onrender.com
+```
+
+Add a rewrite rule for client-side routes:
+
+| Source | Destination |
+|---|---|
+| `/*` | `/index.html` |
+
+After the frontend is deployed, update the backend `CORS_ORIGINS` value with
+the actual frontend URL and redeploy the backend.
+
+In MongoDB Atlas, allow Render to connect under **Network Access**. For initial
+testing, `0.0.0.0/0` can be used.
+
+## API Endpoints
+
+Base URL:
+
+- Local: `http://localhost:3000`
+- Production: `https://lynk-backend-ghl9.onrender.com`
 
 ### Authentication
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
-- `GET /api/auth/me` (protected)
+- `GET /api/auth/me`
 
-### URL Management
+### URLs
 
-- `POST /api/create` (public; supports authenticated context when cookie exists)
-- `GET /:id` (redirect + click increment)
-
-### User URLs
-
-- `POST /api/user/urls` (protected; fetch current user's URLs)
-- `DELETE /api/user/urls/:urlId` (protected; delete owned URL)
-
-### Example: Create Short URL
-
-```http
-POST /api/create
-Content-Type: application/json
-
-{
-  "url": "https://example.com",
-  "slug": "my-custom-slug"
-}
-```
-
-```json
-{
-  "shortUrl": "http://localhost:3000/my-custom-slug"
-}
-```
-
-## Authentication And Security Notes
-
-- Authentication uses an `accessToken` cookie.
-- Cookie settings include `httpOnly` and `sameSite: Lax`.
-- In production, authentication cookies use `SameSite=None` and `Secure` so
-  the separately hosted Render frontend can send them to the backend.
-- Cookie `secure` is enabled automatically in production (`NODE_ENV=production`).
-- Frontend sends cookies with `withCredentials: true`.
-- Protected routes are enforced by backend middleware.
-
-For production deployments:
-
-- Use a strong `JWT_SECRET`.
-- Serve over HTTPS.
-- Restrict `CORS_ORIGINS` to trusted domains only.
+- `POST /api/create`
+- `GET /:id`
+- `POST /api/user/urls`
+- `DELETE /api/user/urls/:urlId`
 
 ## Troubleshooting
 
-### Frontend shows network errors
+### `ERR_CONNECTION_REFUSED`
 
-- Start the backend first and keep its terminal open:
+The backend is not running or has crashed. Start it and wait for both
+`MongoDB Connected` and `Server is running` messages.
 
-  ```bash
-  cd BACKEND
-  npm run dev
-  ```
+### MongoDB authentication failure
 
-- Wait for both `MongoDB Connected` and `Server is running on http://localhost:3000`
-  before submitting a frontend form.
-- Verify the backend health endpoint:
+Check the Atlas database username and password in `MONGO_URI`. These are
+different from your Atlas website credentials. URL-encode special characters
+in the password, such as `@`, `:`, `/`, `?`, `#`, and `%`.
 
-  ```bash
-  curl http://localhost:3000/health
-  ```
+### `401` after login
 
-  The response should be `{"status":"ok"}`.
-- Verify `VITE_API_URL` matches backend base URL.
-- `ERR_CONNECTION_REFUSED` means that no backend process is listening on port
-  `3000`. If Nodemon reports `app crashed`, resolve the MongoDB error and wait
-  for it to start successfully before retrying the frontend request.
+Confirm that:
 
-### Unauthorized responses on protected endpoints
-
-- Confirm login request succeeds.
-- Confirm browser receives the `accessToken` cookie.
-- Confirm requests are sent with credentials.
-
-### MongoDB connection errors
-
-- Check `MONGO_URI` in `BACKEND/.env` or the Render backend environment.
-- Confirm your deployment is allowed in MongoDB Atlas Network Access.
-- For `bad auth: authentication failed`, reset or verify the Atlas database user's
-  password and username, and URL-encode special characters in the password
-  (`@`, `:`, `/`, `?`, `#`, and `%`) before placing them in `MONGO_URI`.
-- Make sure the URI uses the Atlas database user's credentials, not your
-  MongoDB Atlas website login credentials.
-
-## Roadmap
-
-- Add request validation (for example: zod or express-validator).
-- Add pagination/filtering/sorting for user URL listing.
-- Add test coverage (unit, integration, and e2e).
-- Add rate limiting for auth and URL creation endpoints.
-- Add richer analytics and reporting.
+- `CORS_ORIGINS` exactly matches the deployed frontend URL.
+- The frontend uses the deployed backend in `VITE_API_URL`.
+- The backend has been redeployed after environment changes.
+- Browser cookies were cleared before trying again.
