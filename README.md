@@ -243,6 +243,8 @@ Content-Type: application/json
 
 - Authentication uses an `accessToken` cookie.
 - Cookie settings include `httpOnly` and `sameSite: Lax`.
+- In production, authentication cookies use `SameSite=None` and `Secure` so
+  the separately hosted Render frontend can send them to the backend.
 - Cookie `secure` is enabled automatically in production (`NODE_ENV=production`).
 - Frontend sends cookies with `withCredentials: true`.
 - Protected routes are enforced by backend middleware.
