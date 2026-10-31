@@ -95,7 +95,7 @@ url-shortner/
 
 - Node.js 18 or later
 - npm 9 or later
-- MongoDB running locally (default port `27017`)
+- MongoDB Atlas cluster (or local MongoDB)
 
 ### Installation
 
@@ -114,7 +114,7 @@ npm install
 Create `BACKEND/.env`:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/URL-SHORTNER
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/URL-SHORTNER
 APP_URL=http://localhost:3000/
 JWT_SECRET=replace-with-a-secure-secret
 PORT=3000
@@ -140,11 +140,7 @@ If `VITE_API_URL` is not set, frontend defaults to `http://localhost:3000`.
 
 Use separate terminals:
 
-1. Start MongoDB
-
-```bash
-mongod
-```
+1. Start MongoDB or use MongoDB Atlas
 
 2. Start backend
 
@@ -170,13 +166,11 @@ Default local URLs:
 The repository includes a [`render.yaml`](./render.yaml) Blueprint for deploying the
 backend and frontend as separate Render services.
 
-1. Create a MongoDB Atlas cluster and allow connections from Render. For a quick
-   deployment, use `0.0.0.0/0` in Atlas Network Access; restrict this to Render's
-   egress IPs if your plan supports it.
+1. Create a MongoDB Atlas cluster and database user.
 2. Push this repository to GitHub and create a new Render Blueprint.
 3. Select the repository and apply `render.yaml`.
 4. After the services are created, set these values in the backend service:
-   - `MONGO_URI`: your Atlas connection string.
+   - `MONGO_URI`: your MongoDB Atlas connection string.
    - `APP_URL`: the backend Render URL, including the trailing slash, for example
      `https://url-shortner-backend.onrender.com/`.
    - `CORS_ORIGINS`: the frontend Render URL, without a trailing slash, for example
@@ -189,8 +183,8 @@ backend and frontend as separate Render services.
    `VITE_*` variables during the build.
 
 The backend exposes `GET /health` for Render health checks. Keep the frontend and
-backend URLs in the environment variables rather than committing production
-secrets or URLs to the repository.
+backend URLs in environment variables rather than committing production secrets
+or URLs to the repository.
 
 ## Scripts
 
@@ -275,8 +269,8 @@ For production deployments:
 
 ### MongoDB connection errors
 
-- Start MongoDB before backend.
-- Check `MONGO_URI` in `BACKEND/.env`.
+- Check `MONGO_URI` in `BACKEND/.env` or the Render backend environment.
+- Confirm your deployment is allowed in MongoDB Atlas Network Access.
 
 ## Roadmap
 
