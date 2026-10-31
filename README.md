@@ -257,9 +257,26 @@ For production deployments:
 
 ### Frontend shows network errors
 
-- Verify backend is running on the configured port.
-- Verify MongoDB is running.
+- Start the backend first and keep its terminal open:
+
+  ```bash
+  cd BACKEND
+  npm run dev
+  ```
+
+- Wait for both `MongoDB Connected` and `Server is running on http://localhost:3000`
+  before submitting a frontend form.
+- Verify the backend health endpoint:
+
+  ```bash
+  curl http://localhost:3000/health
+  ```
+
+  The response should be `{"status":"ok"}`.
 - Verify `VITE_API_URL` matches backend base URL.
+- `ERR_CONNECTION_REFUSED` means that no backend process is listening on port
+  `3000`. If Nodemon reports `app crashed`, resolve the MongoDB error and wait
+  for it to start successfully before retrying the frontend request.
 
 ### Unauthorized responses on protected endpoints
 
@@ -271,6 +288,11 @@ For production deployments:
 
 - Check `MONGO_URI` in `BACKEND/.env` or the Render backend environment.
 - Confirm your deployment is allowed in MongoDB Atlas Network Access.
+- For `bad auth: authentication failed`, reset or verify the Atlas database user's
+  password and username, and URL-encode special characters in the password
+  (`@`, `:`, `/`, `?`, `#`, and `%`) before placing them in `MONGO_URI`.
+- Make sure the URI uses the Atlas database user's credentials, not your
+  MongoDB Atlas website login credentials.
 
 ## Roadmap
 

@@ -41,9 +41,17 @@ app.get("/:id",redirectFromShortUrl)
 
 app.use(errorHandler)
 
-app.listen(PORT,()=>{
-    connectDB()
-    console.log(`Server is running on http://localhost:${PORT}`);
-})
+const startServer = async () => {
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
+    } catch {
+        process.exitCode = 1;
+    }
+};
+
+startServer();
 
 // GET - Redirection 
